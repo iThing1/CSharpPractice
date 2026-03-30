@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Text;
 
 class Calculator
@@ -59,10 +58,12 @@ class Calculator
                 case "*": result = numFirst * numSecond; break;
                 case "/":
                     if (numSecond != 0) result = numFirst / numSecond;
-                    else Console.WriteLine("오류: 0으로 나눌 수 없습니다.\n"); success = false;
+                    else Console.WriteLine("오류: 0으로 나눌 수 없습니다.\n");
+                    success = false;
                     break;
                 default:
-                    Console.WriteLine("오류: 지원하지 않는 연산자입니다.\n"); success = false;
+                    Console.WriteLine("오류: 지원하지 않는 연산자입니다.\n"); 
+                    success = false;
                     break;
             }
 
