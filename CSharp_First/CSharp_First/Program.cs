@@ -24,5 +24,25 @@ class Calculator
             return;
         }
 
+        double result = 0;
+        bool success = true;
+        switch (selectedOp)
+        {
+            case "+": result = numFirst + numSecond; break;
+            case "-": result = numFirst - numSecond; break;
+            case "*": result = numFirst * numSecond; break;
+            case "/":
+                if (numSecond != 0) result = numFirst / numSecond;
+                else Console.WriteLine("오류: 0으로 나눌 수 없습니다.\n"); success = false;
+                break;
+            default:
+                Console.WriteLine("오류: 지원하지 않는 연산자입니다.\n"); success = false;
+                break;
+        }
+
+        if (success)
+        {
+            Console.WriteLine($"결과: {numFirst} {selectedOp} {numSecond} = {result}");
+        }
     }
 }
