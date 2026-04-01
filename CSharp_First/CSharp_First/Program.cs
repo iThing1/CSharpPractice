@@ -127,28 +127,45 @@ namespace CSharp_First
         }
     }
 
+    public class GameManager
+    {
+        private Room[] mRooms;
+        private int mCurrentRoomIndex = 0;
+        public Player Player { get; private set; }
+        public bool IsRunning { get; private set; } = true;
+
+        public GameManager()
+        {
+            Player = new Player();
+            InitGame();
+        }
+
+        public void InitGame()
+        {
+            mRooms = new Room[4];
+            mRooms[0] = new Room("방문");
+            mRooms[1] = new Room("옷장이 보이는 벽면");
+            mRooms[2] = new Room("창문이 있는 벽");
+            mRooms[3] = new Room("침대가 있는 쪽");
+            
+            // 여기서부터 공간안에 들어갈 물체를 생성 및 배치
+            // 예시: mRoom[1].ObjectList.Add(new SafeBox());
+        }
+
+        public void MoveRoom(int dir)
+        {
+            // 순환형 이동로직 선택
+            int nextIndex = (dir == 1) ?  mCurrentRoomIndex - 1 : mCurrentRoomIndex + 1;
+            if (nextIndex > 3) nextIndex = 0;
+            else if (nextIndex < 0) nextIndex = 3;
+        }
+    }
+
     internal class Program
     {
         static void Main(string[] args)
         {
-            Player player = new Player();
-            SafeBox safe = new SafeBox();
-
-            Console.WriteLine("=== 시나리오 1: 빈손으로 금고 조사 ===");
-            safe.Interact(player);
-
-            Console.WriteLine("\n--------------------------------------");
-            Console.WriteLine($">> 시스템: {ItemData.OldKey}를 획득했습니다.");
-            Console.WriteLine("--------------------------------------");
-
-            Console.WriteLine("\n=== 시나리오 2: 열쇠를 가지고 금고 조사 ===");
-            player.AddItem(ItemData.OldKey);
-            safe.Interact(player);
-
-            Console.WriteLine("\n=== 시나리오 3: 이미 열린 금고 재조사 ===");
-            safe.Interact(player);
-
-            Console.ReadKey();
+            
         }
     }
 }
