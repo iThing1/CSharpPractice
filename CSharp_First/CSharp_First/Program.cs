@@ -259,7 +259,23 @@ namespace CSharp_First
 
     public class GameManager
     {
-        public GameState mCurrentState { get; private set; }
+        private GameState _mCurrentState;
+        public GameState mCurrentState
+        {
+            get => _mCurrentState;
+            private set
+            {
+                _mCurrentState = value;
+                if (_mCurrentState == GameState.Running)
+                {
+                    RunGame();
+                }
+                else if (_mCurrentState == GameState.Exit)
+                {
+                    ExitGame();
+                }
+            }
+        }
 
         private Room[] mRooms;
         private int mCurrentRoomIndex = 0;
@@ -389,11 +405,13 @@ namespace CSharp_First
                         break;
                 }
 
-                if (mCurrentState == GameState.Exit) break;
+                if (mCurrentState == GameState.Exit)
+                {
+                    break;
+                }
                 Console.WriteLine("\n(계속하려면 아무 키나 누르세요)");
                 Console.ReadKey();
             }
-            ExitGame();
         }
 
         public void ExitGame()
@@ -412,7 +430,7 @@ namespace CSharp_First
                 SlowSay("당신은 이제......?");
                 Thread.Sleep(1000);
             }
-            Console.WriteLine("\n게임을 종료하려면 아무 키나 누르세요...");
+            Console.WriteLine("\nThe End");
             Console.ReadKey();
         }
 
@@ -475,7 +493,6 @@ namespace CSharp_First
         {
             GameManager gm = new GameManager();
             gm.InitGame();
-            gm.RunGame();
         }
     }
 }
