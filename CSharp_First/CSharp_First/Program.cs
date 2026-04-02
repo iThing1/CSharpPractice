@@ -12,7 +12,6 @@ namespace CSharp_First
         Knife = 200,
         Note = 300,
     }
-
     public enum GameState
     {
         None,
@@ -22,7 +21,7 @@ namespace CSharp_First
     }
 
     // 아이템을 static으로 선언
-    // 
+    // 현재 아이템 클래스는 아이템 이름을 반환하는 기능만 있음.
     public static class Item
     {
         public static string GetItemmName(ItemData item)
@@ -42,6 +41,8 @@ namespace CSharp_First
             }
         }
     }
+    // 추상 클래스
+    // 상호작용 가능한 물체들의 공통된 속성과 기능을 정의
     public abstract class InteractableObject
     {
         public string mName { get; protected set; }
@@ -52,8 +53,20 @@ namespace CSharp_First
             mName = name;
             Description = desc;
         }
-
-        public abstract void Interact(Player player, GameManager gameMgr);
+        // virtual로 변경시 공통 로직도 자식에서 변경할 수 있음
+        // => Interact를 오버라이드 하고 base.interact()로 공통 로직 호출하는 형태로도 구현 가능
+        // 코드 작성시 실수 방지를 위해 virtual이 아닌 그냥 일반 메서드로 구현
+        public void Interact(Player player, GameManager gameMgr)
+        {
+            // 공통 로직은 여기에
+            // 조사할 때 마다 출력되는 메시지나 효과 등을 이곳에서 처리
+            Console.WriteLine("----------------------------------");
+            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
+            Console.WriteLine("----------------------------------\n");
+            // 자식 클래스에서 구체적인 상호작용 로직을 구현하도록 추상 메서드 호출
+            OnInteract(player, gameMgr);
+        }
+        protected abstract void OnInteract(Player player, GameManager gameMgr);
     }
 
     public interface IItemDropable
@@ -65,9 +78,8 @@ namespace CSharp_First
     {
         public void Unlock();
     }
-    // =======================================================================
+
     // ============= 물건 목록 ===================================================
-    // =======================================================================
     public class SafeBox : InteractableObject, IItemDropable, ILockable
     {
         public ItemData mReqItemID { get; private set; }
@@ -78,11 +90,10 @@ namespace CSharp_First
         {
             mReqItemID = ItemData.OldKey;
             mDropItemID = ItemData.Note;
-        }   
+        }
 
-        public override void Interact(Player player, GameManager gameMgr)
+        protected override void OnInteract(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
             if (mIsLocked)
             {
                 Console.WriteLine($"{Item.GetItemmName(mReqItemID)}가 필요할 것 같다.");
@@ -91,7 +102,9 @@ namespace CSharp_First
                     Unlock();
                     player.AddItem(mDropItemID);
                     player.Inventory.Remove(mReqItemID);
+                    Console.WriteLine("----------------------------------");
                     Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
+                    Console.WriteLine("----------------------------------\n");
                 }
                 else 
                     Console.WriteLine("하지만 열쇠가 없다. 다른 곳을 더 찾아보자.");
@@ -124,7 +137,7 @@ namespace CSharp_First
         public Cabinet() : base("책상 캐비넷", "단단하게 잠겨진 책상 캐비넷이다.") 
         { mReqItemID = ItemData.CabinetKey; }
 
-        public override void Interact(Player player, GameManager gameMgr)
+        protected override void OnInteract(Player player, GameManager gameMgr)
         {
             if (mIsLocked)
             {
@@ -133,7 +146,9 @@ namespace CSharp_First
                 {
                     Unlock();
                     player.Inventory.Remove(mReqItemID);
+                    Console.WriteLine("----------------------------------");
                     Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
+                    Console.WriteLine("----------------------------------\n");
                 }
                 else
                     Console.WriteLine("하지만 열쇠가 없다. 다른 곳을 더 찾아보자.");
@@ -148,6 +163,9 @@ namespace CSharp_First
                 mIsLocked = false;
                 Console.WriteLine("캐비넷이 열렸다!!.");
                 Console.WriteLine("안에 이상한 낙서 같은게 보인다!!");
+                Console.WriteLine("[이 글은 영국에서부터 시작하여......]");
+                Thread.Sleep(1000);
+                Console.WriteLine("글의 뒷부분이 찢겨져있어서 더 이상 읽을 수 없다.");
             }
         }
 
@@ -159,10 +177,8 @@ namespace CSharp_First
         private bool hasItem = true;
 
         public Coat() : base("코트", "벽에 걸려있는 낡은 코트이다.") { }
-        public override void Interact(Player player, GameManager gameMgr)
+        protected override void OnInteract(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
-
             if (hasItem)
             {
                 Console.WriteLine("코트 주머니 속을 뒤져보니 무언가 잡힌다.");
@@ -176,7 +192,9 @@ namespace CSharp_First
 
         public void DropItem()
         {
+            Console.WriteLine("----------------------------------");
             Console.WriteLine($"[System]코트 주머니에서 [{Item.GetItemmName(dropItemID)}]을(를) 획득했습니다!");
+            Console.WriteLine("----------------------------------\n");
         }
     }
     public class DoorLock : InteractableObject
@@ -186,9 +204,8 @@ namespace CSharp_First
 
         public DoorLock() : base("전자 도어락", "단단히 잠긴 철문에 달려있는 도어락이다.") { }
 
-        public override void Interact(Player player, GameManager gameMgr)
+        protected override void OnInteract(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
             if (mIsSolved)
             {
                 Console.WriteLine("이미 잠금이 해제되어 문이 열려 있습니다.");
@@ -211,7 +228,6 @@ namespace CSharp_First
                 gameMgr.ChangeState(GameState.Exit);
                 Console.WriteLine("\n(계속하려면 아무 키나 누르세요)");
                 Console.ReadKey();
-                
             }
             else
             {
@@ -273,7 +289,9 @@ namespace CSharp_First
             // 여기서부터 공간안에 들어갈 물체를 생성 및 배치
             mRooms[0].mObjectList.Add(new DoorLock());
             mRooms[1].mObjectList.Add(new Coat());
+            mRooms[1].mObjectList.Add(new Cabinet());
             mRooms[2].mObjectList.Add(new SafeBox());
+            
 
             Console.WriteLine("게임 시작");
             ChangeState(GameState.Running);
@@ -291,7 +309,7 @@ namespace CSharp_First
                 }
 
                 Console.Clear();
-                Console.WriteLine($"--- 현재 위치: {mRooms[mCurrentRoomIndex].mName} ---");
+                Console.WriteLine($"--- 현재 위치: [{mRooms[mCurrentRoomIndex].mName}] ---");
                 Console.WriteLine("무엇을 할까?");
                 Console.WriteLine("1. 이동  2. 조사  3. 인벤토리  (0. 종료)");
                 if (!int.TryParse(Console.ReadLine(), out int selectNum))
@@ -378,17 +396,15 @@ namespace CSharp_First
             if (mIsCompleted)
             {
                 Console.Clear();
-                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("========================================");
                 Console.WriteLine("        ?? [CONGRATULATIONS] ??           ");
                 Console.WriteLine("========================================");
-                Console.ResetColor();
-                SlowSay("\n당신은 모든 수수께끼를 풀고 방을 탈출했습니다.");
+                SlowSay("\n당신은 모든 수수께끼를 풀고 방을 탈출했습니다.\n");
                 Thread.Sleep(1000);
-                SlowSay("하지만 당신의 눈앞에 보이는 건 거대한 잠겨진 문과\n");
+                SlowSay("하지만 당신의 눈앞에 보이는 건 거대한 잠겨진 문과");
                 SlowSay("얼룩진 피로 장식된 바닥과 벽 뿐입니다....\n");
                 Thread.Sleep(1000);
-                SlowSay("당신은 이제 뭘 하시겠습니까....?");
+                SlowSay("당신은 이제......?");
                 Thread.Sleep(1000);
             }
             Console.WriteLine("\n게임을 종료하려면 아무 키나 누르세요...");
@@ -430,7 +446,7 @@ namespace CSharp_First
             Thread.Sleep(1000);
             SlowSay("어쩌면 이 상황을 벗어나는 데에 저런 물건들이 필요할지 모릅니다");
             Thread.Sleep(1500);
-            SlowSay("\n심호흡을 한 당신은 이제...\n");
+            SlowSay("\n심호흡을 한 당신은 이제......\n");
             Thread.Sleep(1500);
             Console.WriteLine("----------------------------------------");
             Console.WriteLine("\n[Press Any Key To START]");
@@ -455,7 +471,6 @@ namespace CSharp_First
             GameManager gm = new GameManager();
             gm.InitGame();
             gm.RunGame();
-
         }
     }
 }
