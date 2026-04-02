@@ -24,7 +24,7 @@ namespace CSharp_First
     // 현재 아이템 클래스는 아이템 이름을 반환하는 기능만 있음.
     public static class Item
     {
-        public static string GetItemmName(ItemData item)
+        public static string GetItemName(ItemData item)
         {
             switch (item)
             {
@@ -96,14 +96,14 @@ namespace CSharp_First
         {
             if (mIsLocked)
             {
-                Console.WriteLine($"{Item.GetItemmName(mReqItemID)}가 필요할 것 같다.");
+                Console.WriteLine($"{Item.GetItemName(mReqItemID)}가 필요할 것 같다.");
                 if (player.HasItem(mReqItemID))
                 {
                     Unlock();
                     player.AddItem(mDropItemID);
                     player.Inventory.Remove(mReqItemID);
                     Console.WriteLine("----------------------------------");
-                    Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
+                    Console.WriteLine($"[System]{Item.GetItemName(mReqItemID)}이/가 사라졌습니다.");
                     Console.WriteLine("----------------------------------\n");
                 }
                 else 
@@ -125,7 +125,7 @@ namespace CSharp_First
 
         public void DropItem()
         {
-            Console.WriteLine($"금고 안에서 [{Item.GetItemmName(mDropItemID)}]을(를) 발견했다!");
+            Console.WriteLine($"금고 안에서 [{Item.GetItemName(mDropItemID)}]을(를) 발견했다!");
         }
     }
 
@@ -141,13 +141,13 @@ namespace CSharp_First
         {
             if (mIsLocked)
             {
-                Console.WriteLine($"{Item.GetItemmName(mReqItemID)}가 필요할 것 같다.");
+                Console.WriteLine($"{Item.GetItemName(mReqItemID)}가 필요할 것 같다.");
                 if (player.HasItem(mReqItemID))
                 {
                     Unlock();
                     player.Inventory.Remove(mReqItemID);
                     Console.WriteLine("----------------------------------");
-                    Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
+                    Console.WriteLine($"[System]{Item.GetItemName(mReqItemID)}이/가 사라졌습니다.");
                     Console.WriteLine("----------------------------------\n");
                 }
                 else
@@ -193,7 +193,7 @@ namespace CSharp_First
         public void DropItem()
         {
             Console.WriteLine("----------------------------------");
-            Console.WriteLine($"[System]코트 주머니에서 [{Item.GetItemmName(dropItemID)}]을(를) 획득했습니다!");
+            Console.WriteLine($"[System]코트 주머니에서 [{Item.GetItemName(dropItemID)}]을(를) 획득했습니다!");
             Console.WriteLine("----------------------------------\n");
         }
     }
@@ -276,10 +276,9 @@ namespace CSharp_First
         public void ChangeState(GameState state) => mCurrentState = state;
         public void ChangeExitCondition(bool IsCompleted) => mIsCompleted = true;
         public void InitGame()
-        {
+        {      
             ShowTitle();
             // ShowStory();
-
             mRooms = new Room[4];
             mRooms[0] = new Room("방문");
             mRooms[1] = new Room("옷걸이대가 있는 벽");
@@ -291,7 +290,6 @@ namespace CSharp_First
             mRooms[1].mObjectList.Add(new Coat());
             mRooms[1].mObjectList.Add(new Cabinet());
             mRooms[2].mObjectList.Add(new SafeBox());
-            
 
             Console.WriteLine("게임 시작");
             ChangeState(GameState.Running);
@@ -299,7 +297,7 @@ namespace CSharp_First
 
         public void RunGame()
         {
-            mIsRunning = true;
+            mIsRunning = true; 
             while (mIsRunning)
             {
                 if (mCurrentState == GameState.Exit)
@@ -315,6 +313,13 @@ namespace CSharp_First
                 if (!int.TryParse(Console.ReadLine(), out int selectNum))
                 {
                     Console.WriteLine("숫자만 입력 가능합니다.");
+                    Console.ReadKey();
+                    continue;
+                }
+                // 피드백 내용 반영
+                if (selectNum < 0 || selectNum > 3)
+                {
+                    Console.WriteLine("잘못된 번호입니다.");
                     Console.ReadKey();
                     continue;
                 }
@@ -374,7 +379,7 @@ namespace CSharp_First
                             for (int i = 0; i < mPlayer.Inventory.Count; i++)
                             {
                                 ItemData item = mPlayer.Inventory[i];
-                                Console.WriteLine($"- {Item.GetItemmName(item)}");
+                                Console.WriteLine($"- {Item.GetItemName(item)}");
                             }
                         }
                         break;
