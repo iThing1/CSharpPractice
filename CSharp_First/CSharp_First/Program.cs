@@ -8,6 +8,7 @@ namespace CSharp_First
     {
         None = 0,
         OldKey = 100,
+        CabinetKey = 101,
         Knife = 200,
         Note = 300,
     }
@@ -24,12 +25,14 @@ namespace CSharp_First
     // 
     public static class Item
     {
-        public static string GetItemName(ItemData item)
+        public static string GetItemmName(ItemData item)
         {
             switch (item)
             {
                 case ItemData.OldKey: 
                     return "낡은 열쇠";
+                    case ItemData.CabinetKey:
+                    return "캐비닛 열쇠";
                 case ItemData.Knife: 
                     return "칼";
                 case ItemData.Note:
@@ -41,12 +44,12 @@ namespace CSharp_First
     }
     public abstract class InteractableObject
     {
-        public string Name { get; protected set; }
+        public string mName { get; protected set; }
         public string Description { get; protected set; }
 
         protected InteractableObject(string name, string desc)
         { 
-            Name = name;
+            mName = name;
             Description = desc;
         }
 
@@ -67,28 +70,28 @@ namespace CSharp_First
     // =======================================================================
     public class SafeBox : InteractableObject, IItemDropable, ILockable
     {
-        public ItemData ReqItemID { get; private set; }
-        public ItemData DropItemID { get; private set; }
-        public bool IsLocked { get; private set; } = true;
+        public ItemData mReqItemID { get; private set; }
+        public ItemData mDropItemID { get; private set; }
+        public bool mIsLocked { get; private set; } = true;
 
         public SafeBox() : base ("금고", "단단히 잠겨져있는 금고이다.")
         {
-            ReqItemID = ItemData.OldKey;
-            DropItemID = ItemData.Note;
+            mReqItemID = ItemData.OldKey;
+            mDropItemID = ItemData.Note;
         }   
 
         public override void Interact(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{Name}을(를) 조사합니다.");
-            if (IsLocked)
+            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
+            if (mIsLocked)
             {
-                Console.WriteLine($"{Item.GetItemName(ReqItemID)}가 필요할 것 같다.");
-                if (player.HasItem(ReqItemID))
+                Console.WriteLine($"{Item.GetItemmName(mReqItemID)}가 필요할 것 같다.");
+                if (player.HasItem(mReqItemID))
                 {
                     Unlock();
-                    player.AddItem(DropItemID);
-                    player.Inventory.Remove(ReqItemID);
-                    Console.WriteLine($"[System]{Item.GetItemName(ReqItemID)}이/가 사라졌습니다.");
+                    player.AddItem(mDropItemID);
+                    player.Inventory.Remove(mReqItemID);
+                    Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
                 }
                 else 
                     Console.WriteLine("하지만 열쇠가 없다. 다른 곳을 더 찾아보자.");
@@ -99,9 +102,9 @@ namespace CSharp_First
 
         public void Unlock()
         {
-            if (IsLocked)
+            if (mIsLocked)
             {
-                IsLocked = false;
+                mIsLocked = false;
                 Console.WriteLine("금고가 열렸다!!.");
                 DropItem();
             }
@@ -109,8 +112,45 @@ namespace CSharp_First
 
         public void DropItem()
         {
-            Console.WriteLine($"금고 안에서 [{Item.GetItemName(DropItemID)}]을(를) 발견했다!");
+            Console.WriteLine($"금고 안에서 [{Item.GetItemmName(mDropItemID)}]을(를) 발견했다!");
         }
+    }
+
+    public class Cabinet : InteractableObject, ILockable
+    {
+        public ItemData mReqItemID { get; private set; }
+        public bool mIsLocked { get; private set; } = true;
+
+        public Cabinet() : base("책상 캐비넷", "단단하게 잠겨진 책상 캐비넷이다.") 
+        { mReqItemID = ItemData.CabinetKey; }
+
+        public override void Interact(Player player, GameManager gameMgr)
+        {
+            if (mIsLocked)
+            {
+                Console.WriteLine($"{Item.GetItemmName(mReqItemID)}가 필요할 것 같다.");
+                if (player.HasItem(mReqItemID))
+                {
+                    Unlock();
+                    player.Inventory.Remove(mReqItemID);
+                    Console.WriteLine($"[System]{Item.GetItemmName(mReqItemID)}이/가 사라졌습니다.");
+                }
+                else
+                    Console.WriteLine("하지만 열쇠가 없다. 다른 곳을 더 찾아보자.");
+                return;
+            }
+            Console.WriteLine("이미 조사했던 캐비넷이다.");
+        }
+        public void Unlock()
+        {
+            if (mIsLocked)
+            {
+                mIsLocked = false;
+                Console.WriteLine("캐비넷이 열렸다!!.");
+                Console.WriteLine("안에 이상한 낙서 같은게 보인다!!");
+            }
+        }
+
     }
 
     public class Coat : InteractableObject, IItemDropable
@@ -118,10 +158,10 @@ namespace CSharp_First
         private ItemData dropItemID = ItemData.OldKey;
         private bool hasItem = true;
 
-        public Coat() : base("코트", "벽에 걸려있는 낡은 코트이다. 주머니가 두툼해 보인다.") { }
+        public Coat() : base("코트", "벽에 걸려있는 낡은 코트이다.") { }
         public override void Interact(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{Name}을(를) 조사합니다.");
+            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
 
             if (hasItem)
             {
@@ -136,20 +176,20 @@ namespace CSharp_First
 
         public void DropItem()
         {
-            Console.WriteLine($"[System]코트 주머니에서 [{Item.GetItemName(dropItemID)}]을(를) 획득했습니다!");
+            Console.WriteLine($"[System]코트 주머니에서 [{Item.GetItemmName(dropItemID)}]을(를) 획득했습니다!");
         }
     }
     public class DoorLock : InteractableObject
     {
-        private string password = "1111"; // 탈출 비밀번호
-        private bool isSolved = false;
+        private string mPassword = "1111"; // 탈출 비밀번호
+        private bool mIsSolved = false;
 
-        public DoorLock() : base("전자 도어락", "단단히 잠긴 철문에 달려있는 도어락이다. 숫자 패드가 빛나고 있다.") { }
+        public DoorLock() : base("전자 도어락", "단단히 잠긴 철문에 달려있는 도어락이다.") { }
 
         public override void Interact(Player player, GameManager gameMgr)
         {
-            Console.WriteLine($"[System]{Name}을(를) 조사합니다.");
-            if (isSolved)
+            Console.WriteLine($"[System]{mName}을(를) 조사합니다.");
+            if (mIsSolved)
             {
                 Console.WriteLine("이미 잠금이 해제되어 문이 열려 있습니다.");
                 return;
@@ -160,13 +200,14 @@ namespace CSharp_First
 
             if (input == "0") return;
 
-            if (input == password)
+            if (input == mPassword)
             {
-                isSolved = true;
+                mIsSolved = true;
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("<<<<< 삐비빅! 잠금이 해제되었습니다! >>>>>");
                 Console.ResetColor();
+                gameMgr.ChangeExitCondition(mIsSolved);
                 gameMgr.ChangeState(GameState.Exit);
                 Console.WriteLine("\n(계속하려면 아무 키나 누르세요)");
                 Console.ReadKey();
@@ -183,12 +224,12 @@ namespace CSharp_First
 
     public class Room
     {
-        public string Name { get; private set; }
-        public List<InteractableObject> objectList { get; set; } = new List<InteractableObject>();
+        public string mName { get; private set; }
+        public List<InteractableObject> mObjectList { get; set; } = new List<InteractableObject>();
 
         public Room(string name)
         {
-            Name = name;
+            mName = name;
         }
     }
 
@@ -202,25 +243,26 @@ namespace CSharp_First
 
     public class GameManager
     {
-        public GameState CurrentState { get; private set; }
+        public GameState mCurrentState { get; private set; }
 
         private Room[] mRooms;
         private int mCurrentRoomIndex = 0;
-        public Player Player { get; private set; }
-        public bool IsRunning { get; private set; } = false;
+        public Player mPlayer { get; private set; }
+        public bool mIsRunning { get; private set; } = false;
+        public bool mIsCompleted { get; private set; } = false;
 
         public GameManager()
         {
-            Player = new Player();
-            CurrentState = GameState.None;
+            mPlayer = new Player();
+            mCurrentState = GameState.None;
         }
 
-        public void ChangeState(GameState state) => CurrentState = state;
-
+        public void ChangeState(GameState state) => mCurrentState = state;
+        public void ChangeExitCondition(bool IsCompleted) => mIsCompleted = true;
         public void InitGame()
         {
             ShowTitle();
-            ShowStory();
+            // ShowStory();
 
             mRooms = new Room[4];
             mRooms[0] = new Room("방문");
@@ -229,9 +271,9 @@ namespace CSharp_First
             mRooms[3] = new Room("침대가 있는 쪽");
 
             // 여기서부터 공간안에 들어갈 물체를 생성 및 배치
-            mRooms[0].objectList.Add(new DoorLock());
-            mRooms[1].objectList.Add(new Coat());
-            mRooms[2].objectList.Add(new SafeBox());
+            mRooms[0].mObjectList.Add(new DoorLock());
+            mRooms[1].mObjectList.Add(new Coat());
+            mRooms[2].mObjectList.Add(new SafeBox());
 
             Console.WriteLine("게임 시작");
             ChangeState(GameState.Running);
@@ -239,17 +281,17 @@ namespace CSharp_First
 
         public void RunGame()
         {
-            IsRunning = true;
-            while (IsRunning)
+            mIsRunning = true;
+            while (mIsRunning)
             {
-                if (CurrentState == GameState.Exit)
+                if (mCurrentState == GameState.Exit)
                 {
-                    IsRunning = false;
+                    mIsRunning = false;
                     break; 
                 }
 
                 Console.Clear();
-                Console.WriteLine($"--- 현재 위치: {mRooms[mCurrentRoomIndex].Name} ---");
+                Console.WriteLine($"--- 현재 위치: {mRooms[mCurrentRoomIndex].mName} ---");
                 Console.WriteLine("무엇을 할까?");
                 Console.WriteLine("1. 이동  2. 조사  3. 인벤토리  (0. 종료)");
                 if (!int.TryParse(Console.ReadLine(), out int selectNum))
@@ -272,7 +314,7 @@ namespace CSharp_First
 
                     case 2: // 조사 로직
                         {
-                            List<InteractableObject> currentObjects = mRooms[mCurrentRoomIndex].objectList;
+                            List<InteractableObject> currentObjects = mRooms[mCurrentRoomIndex].mObjectList;
                             if (currentObjects.Count == 0)
                             {
                                 Console.WriteLine("여기는 조사할 만한 것이 없다.");
@@ -283,7 +325,7 @@ namespace CSharp_First
                             Console.WriteLine("눈에 들어오는 몇개의 물건이 있다.");
                             for (int i = 0; i < currentObjects.Count; i++)
                             {
-                                Console.WriteLine($"{i + 1}. {currentObjects[i].Name}");
+                                Console.WriteLine($"{i + 1}. {currentObjects[i].mName} : {currentObjects[i].Description}");
                             }
                             Console.WriteLine("----------------------------------");
                             Console.Write("어떤 것을 조사해볼까?  (0: 뒤로가기) ");
@@ -296,7 +338,7 @@ namespace CSharp_First
                                 if (targetIndex >= 0 && targetIndex < currentObjects.Count)
                                 {
                                     Console.Clear();
-                                    currentObjects[targetIndex].Interact(Player, this);
+                                    currentObjects[targetIndex].Interact(mPlayer, this);
                                 }
                                 else
                                 {
@@ -308,23 +350,23 @@ namespace CSharp_First
                         break;
                     case 3:
                         Console.WriteLine("--- 인벤토리 목록 ---");
-                        if (Player.Inventory.Count == 0) Console.WriteLine("비어 있음");
+                        if (mPlayer.Inventory.Count == 0) Console.WriteLine("비어 있음");
                         else
                         {
-                            for (int i = 0; i < Player.Inventory.Count; i++)
+                            for (int i = 0; i < mPlayer.Inventory.Count; i++)
                             {
-                                ItemData item = Player.Inventory[i];
-                                Console.WriteLine($"- {Item.GetItemName(item)}");
+                                ItemData item = mPlayer.Inventory[i];
+                                Console.WriteLine($"- {Item.GetItemmName(item)}");
                             }
                         }
                         break;
                     case 0:
-                        IsRunning = false;
+                        mIsRunning = false;
                         ChangeState(GameState.Exit);            
                         break;
                 }
 
-                if (CurrentState == GameState.Exit) break;
+                if (mCurrentState == GameState.Exit) break;
                 Console.WriteLine("\n(계속하려면 아무 키나 누르세요)");
                 Console.ReadKey();
             }
@@ -333,16 +375,22 @@ namespace CSharp_First
 
         public void ExitGame()
         {
-            Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("========================================");
-            Console.WriteLine("          CONGRATULATIONS!              ");
-            Console.WriteLine("========================================");
-            Console.ResetColor();
-            SlowSay("\n당신은 모든 수수께끼를 풀고 방을 탈출했습니다.");
-            Thread.Sleep(1000);
-            SlowSay("탁 트인 하늘을 보며 당신은 안도의 한숨을 내쉽니다.");
-            Thread.Sleep(1000);
+            if (mIsCompleted)
+            {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("========================================");
+                Console.WriteLine("        ?? [CONGRATULATIONS] ??           ");
+                Console.WriteLine("========================================");
+                Console.ResetColor();
+                SlowSay("\n당신은 모든 수수께끼를 풀고 방을 탈출했습니다.");
+                Thread.Sleep(1000);
+                SlowSay("하지만 당신의 눈앞에 보이는 건 거대한 잠겨진 문과\n");
+                SlowSay("얼룩진 피로 장식된 바닥과 벽 뿐입니다....\n");
+                Thread.Sleep(1000);
+                SlowSay("당신은 이제 뭘 하시겠습니까....?");
+                Thread.Sleep(1000);
+            }
             Console.WriteLine("\n게임을 종료하려면 아무 키나 누르세요...");
             Console.ReadKey();
         }
