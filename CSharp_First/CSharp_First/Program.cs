@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace CSharp_First
 {
@@ -73,6 +75,7 @@ namespace CSharp_First
         {
             if (CrystalCount > 0)
             {
+                // 레벨업 시 떨어지진 크리스탈 조각 갯수를 확정 뽑기의 재화로 사용할 수 있도록 구현해보는 것도
                 Console.WriteLine($"[System]크리스탈이 {CrystalCount}개 떨어졌습니다.");
             }
         }
@@ -90,14 +93,12 @@ namespace CSharp_First
             CreaturePool.Add(new CrystalDragon());
         }
 
-        public void PlayGame()
+        public void RunningGame()
         {
             bool isRunning = true;
             while (isRunning)
             {
-                Console.Clear();
-                Console.WriteLine("====================================");
-                Console.WriteLine("1. 크리쳐 랜덤 뽑기\n2. 크리쳐 확정 뽑기\n3. 전체 크리쳐 목록 보기\n4. 내 파티 보기\n0: 종료");
+                GameUtility.ShowMainMenu();
                 int number = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 4);
                 {
                     if (number == 0)
@@ -131,40 +132,9 @@ namespace CSharp_First
                             GameUtility.ShowPartyInfo(PartyList);
                             if (GameUtility.IsPartyEmpty(PartyList)) continue;
                             Console.WriteLine("1. 특정 레벨값으로 찾기\n2. 등급으로 찾기\n3. 이름으로 찾기");
-                            int cartegory = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 3);
-                            if (cartegory == -1) continue;
-                            switch (cartegory)
-                            {
-                                case 1:
-                                    Console.WriteLine("찾고 싶은 레벨값을 입력하세요:");
-                                    int level = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 100);
-                                    if (level == -1) continue;
-                                    FindSpecificCreature(level);
-                                    break;
-                                case 2:
-                                    Console.WriteLine("찾고 싶은 등급을 입력하세요:");
-                                    Console.WriteLine("0: None | 1: Normal | 2: Rare | 3: Unique | 4: Legendary | 5: Ancient");
-                                    int rankNum = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
-                                    if (rankNum == -1) continue;
-                                    CreatureRank rank = (CreatureRank)rankNum;
-                                    FindSpecificCreature(rank);
-                                    break;
-                                case 3:
-                                    Console.WriteLine("찾고 싶은 이름을 입력하세요:");
-                                    string name = Console.ReadLine() ?? "";
-                                    if (string.IsNullOrEmpty(name))
-                                    {
-                                        Console.WriteLine("[System] 이름을 입력해주세요.");
-                                        Console.ReadKey();
-                                        continue;
-                                    }
-                                    FindSpecificCreature(name);
-                                    break;
-                                default:
-                                    Console.WriteLine("[System] 잘못된 행동입니다.");
-                                    Thread.Sleep(2000);
-                                    break;
-                            }
+                            int category = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 3);
+                            if (category == -1) continue;
+                            ShowFindMenu(category);
                             break;
                     }
                 }
@@ -181,7 +151,7 @@ namespace CSharp_First
             for (int i = 0; i < number; i++)
             {
                 Console.WriteLine($"{i + 1}회차 뽑기는....");
-                Thread.Sleep(2000);
+                Thread.Sleep(1200);
                 int choice = randNum.Next(0, _creatureCount);
                 FantasticCreature? newCreature = null;
                 switch(choice)
@@ -208,6 +178,42 @@ namespace CSharp_First
             Console.WriteLine("=======크리쳐 선택권 사용!!========");
             PartyList.Add(creature);
             Console.WriteLine($"[System] {creature.Name}이(가) 파티에 합류했습니다!");
+        }
+
+        public void ShowFindMenu(int number)
+        {
+            switch (number)
+            {
+                case 1:
+                    Console.WriteLine("찾고 싶은 레벨값을 입력하세요:");
+                    int level = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 100);
+                    if (level == -1) return;
+                    FindSpecificCreature(level);
+                    break;
+                case 2:
+                    Console.WriteLine("찾고 싶은 등급을 입력하세요:");
+                    Console.WriteLine("0: None | 1: Normal | 2: Rare | 3: Unique | 4: Legendary | 5: Ancient");
+                    int rankNum = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
+                    if (rankNum == -1) return;
+                    CreatureRank rank = (CreatureRank)rankNum;
+                    FindSpecificCreature(rank);
+                    break;
+                case 3:
+                    Console.WriteLine("찾고 싶은 이름을 입력하세요:");
+                    string name = Console.ReadLine() ?? "";
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Console.WriteLine("[System] 이름을 입력해주세요.");
+                        Console.ReadKey();
+                        return;
+                    }
+                    FindSpecificCreature(name);
+                    break;
+                default:
+                    Console.WriteLine("[System] 잘못된 행동입니다.");
+                    Thread.Sleep(1000);
+                    break;
+            }
         }
 
         public void FindSpecificCreature(string name)
@@ -258,6 +264,32 @@ namespace CSharp_First
             return false;
         }
 
+        public static void GetCreatureRankToColor(CreatureRank rank)
+        {
+            switch (rank)
+            {
+                case CreatureRank.None:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case CreatureRank.Normal:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    break;
+                case CreatureRank.Rare:
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    break;
+                case CreatureRank.Unique:
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    break;
+                case CreatureRank.Legendary:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case CreatureRank.Ancient:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+            }
+            Console.Write($"[{rank.ToString()}]");
+            Console.ResetColor();
+        }
 
         public static int CheckInputIsNumber(string input, int min, int max)
         {
@@ -266,7 +298,7 @@ namespace CSharp_First
                 if (number < min || number > max)
                 {
                     Console.WriteLine("[System] 올바른 숫자를 입력해주세요.");
-                    Console.ReadKey();
+                    Thread.Sleep(1000);
                     return -1;
                 }
                 else return number;
@@ -274,9 +306,19 @@ namespace CSharp_First
             else
             {
                 Console.WriteLine("[System] 숫자를 입력해주세요.");
-                Console.ReadKey();
+                Thread.Sleep(1000);
                 return -1;
             }
+        }
+
+        public static void ShowMainMenu()
+        {
+            Console.Clear();
+            Console.WriteLine("===================================");
+            Console.WriteLine("===================================");
+            Console.WriteLine("1. 크리쳐 랜덤 뽑기\n2. 크리쳐 확정 뽑기\n3. 전체 크리쳐 목록 보기\n4. 내 파티 보기\n0: 종료");
+            Console.WriteLine("===================================");
+            Console.WriteLine("===================================");
         }
 
         public static void ShowCreaturePool(List<FantasticCreature> list)
@@ -290,8 +332,9 @@ namespace CSharp_First
             for (int i = 0; i < list.Count; i++)
             {   
                 Console.WriteLine("==========<< 크리쳐 목록 >>==========");
-                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}");
-                Console.WriteLine($"Rank: {list[i].Rank} | Level: {list[i].Level}");
+                Console.WriteLine($"[{i + 1}] ");
+                GetCreatureRankToColor(list[i].Rank);
+                Console.WriteLine($"{list[i].Name} | Level: {list[i].Level}");
                 Console.WriteLine("------------------------------------");
             }
         }
@@ -308,7 +351,8 @@ namespace CSharp_First
             Console.WriteLine("==========<< 파티 정보 >>==========");
             for (int i = 0; i < list.Count; i++)
             {
-                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}\nRank: {list[i].Rank} | Level: {list[i].Level}\n");
+                GetCreatureRankToColor(list[i].Rank);
+                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}\nLevel: {list[i].Level}\n");
             }
         }
 
@@ -316,7 +360,8 @@ namespace CSharp_First
         public static void ShowCreatureInfo(FantasticCreature creature)
         {
             Console.WriteLine($"==========<< 크리쳐 정보 >>==========");
-            Console.WriteLine($"Name: {creature.Name}\nRank: {creature.Rank} | Level: {creature.Level}\n");
+            GetCreatureRankToColor(creature.Rank);
+            Console.WriteLine($"Name: {creature.Name}\nLevel: {creature.Level}\n");
         }
 
     }
@@ -327,7 +372,7 @@ namespace CSharp_First
         {   
             GameManager gm = new GameManager();
 
-            gm.PlayGame();
+            gm.RunningGame();
             Console.WriteLine("게임이 종료되었습니다. 감사합니다!");  
 
         }
