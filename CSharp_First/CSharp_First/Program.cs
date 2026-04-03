@@ -215,7 +215,7 @@ namespace CSharp_First
             {
                 GameUtility.ShowMainMenu();
                 int number = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
-                if (number == -1) return;
+                if (number == -1) continue;
                 if (number == 0)
                 {
                     currentState = GameState.End;
@@ -359,12 +359,9 @@ namespace CSharp_First
                     FindSpecificCreature(name);
                     break;
                 case 4:
-                    Console.WriteLine("메뉴로 돌아갑니다.");
-                    Thread.Sleep(1000);
                     break;
                 default:
                     Console.WriteLine("[System] 잘못된 행동입니다.");
-                    Thread.Sleep(1000);
                     break;
             }
         }
@@ -500,7 +497,6 @@ namespace CSharp_First
                 if (number < min || number > max)
                 {
                     Console.WriteLine("[System] 올바른 숫자를 입력해주세요.");
-                    Thread.Sleep(1000);
                     return -1;
                 }
                 else return number;
@@ -508,7 +504,6 @@ namespace CSharp_First
             else
             {
                 Console.WriteLine("[System] 숫자를 입력해주세요.");
-                Thread.Sleep(1000);
                 return -1;
             }
         }
@@ -546,7 +541,6 @@ namespace CSharp_First
             if (IsPartyEmpty(list))
             {
                 Console.WriteLine("[System] 파티에 크리쳐가 존재하지 않습니다.");
-                Thread.Sleep(1000); 
                 return;
             }
 
