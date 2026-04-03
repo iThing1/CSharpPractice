@@ -137,7 +137,21 @@ namespace CSharp_First
 
         public void Rebirth()
         {
-            Console.WriteLine($"[{Name}]가 잿더미 속에서 다시 부활합니다! 모든 상처가 치유됩니다.");
+            if (FireEssence > 50)
+            {
+                Console.WriteLine($"[{Name}]가 잿더미 속에서 다시 부활합니다! 모든 상처가 치유됩니다.");
+                FireEssence -= 50;
+                return;
+            }
+            else if (FireEssence > 25)
+            {
+                Console.WriteLine($"[{Name}]가 불꽃의 힘을 파티원에게 부여합니다.");
+                FireEssence -= 25;
+                return;
+            }
+            Console.WriteLine($"불꽃의 정수가 부족하여 스킬이 취소되었습니다.");
+            Console.WriteLine($"현재 보유한 불꽃의 정수: {FireEssence}");
+
         }
     }
 
@@ -150,7 +164,7 @@ namespace CSharp_First
             Name = "그림자 추적자";
             Rank = CreatureRank.Rare;
             Level = 3;
-            EvasionRate = 10.5;
+            EvasionRate = 10;
         }
 
         public override void LevelUp()
@@ -355,6 +369,7 @@ namespace CSharp_First
             }
         }
 
+        // 오버로딩을 사용해 같은 이름의 메서드로 다양한 검색 기능 구현
         public void FindSpecificCreature(string name)
         {
             List<FantasticCreature> result = PartyList.FindAll(c => c.Name == name);
