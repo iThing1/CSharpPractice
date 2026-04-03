@@ -559,7 +559,6 @@ namespace CSharp_First
         {
             GameManager gm = new GameManager();
             gm.InitGame();
-
         }
     }
 }
