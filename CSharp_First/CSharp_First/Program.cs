@@ -90,6 +90,89 @@ namespace CSharp_First
             CreaturePool.Add(new CrystalDragon());
         }
 
+        public void PlayGame()
+        {
+            bool isRunning = true;
+            while (isRunning)
+            {
+                Console.Clear();
+                Console.WriteLine("====================================");
+                Console.WriteLine("1. 크리쳐 랜덤 뽑기\n2. 크리쳐 확정 뽑기\n3. 전체 크리쳐 목록 보기\n4. 내 파티 보기\n0: 종료");
+                int number = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 4);
+                {
+                    if (number == 0)
+                    {
+                        isRunning = false;
+                        continue;
+                    }
+
+                    if (number == -1) continue;
+
+                    switch (number)
+                    {
+                        case 1:
+                            Console.WriteLine("뽑고 싶은 횟수를 입력하세요");
+                            int count = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 10);
+                            if (count == -1) continue;
+                            JoinRandomCreatures(count);
+                            break;
+                        case 2:
+                            Console.WriteLine("크리쳐를 선택하세요:");
+                            GameUtility.ShowCreaturePool(CreaturePool);
+                            int choice = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, CreaturePool.Count);
+                            if (choice == -1) continue;
+                            JoinSpecificCreature(CreaturePool[choice - 1]);
+
+                            break;
+                        case 3:
+                            GameUtility.ShowCreaturePool(CreaturePool);
+                            break;
+                        case 4:
+                            GameUtility.ShowPartyInfo(PartyList);
+                            if (GameUtility.IsPartyEmpty(PartyList)) continue;
+                            Console.WriteLine("1. 특정 레벨값으로 찾기\n2. 등급으로 찾기\n3. 이름으로 찾기");
+                            int cartegory = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 3);
+                            if (cartegory == -1) continue;
+                            switch (cartegory)
+                            {
+                                case 1:
+                                    Console.WriteLine("찾고 싶은 레벨값을 입력하세요:");
+                                    int level = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 100);
+                                    if (level == -1) continue;
+                                    FindSpecificCreature(level);
+                                    break;
+                                case 2:
+                                    Console.WriteLine("찾고 싶은 등급을 입력하세요:");
+                                    Console.WriteLine("0: None | 1: Normal | 2: Rare | 3: Unique | 4: Legendary | 5: Ancient");
+                                    int rankNum = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
+                                    if (rankNum == -1) continue;
+                                    CreatureRank rank = (CreatureRank)rankNum;
+                                    FindSpecificCreature(rank);
+                                    break;
+                                case 3:
+                                    Console.WriteLine("찾고 싶은 이름을 입력하세요:");
+                                    string name = Console.ReadLine() ?? "";
+                                    if (string.IsNullOrEmpty(name))
+                                    {
+                                        Console.WriteLine("[System] 이름을 입력해주세요.");
+                                        Console.ReadKey();
+                                        continue;
+                                    }
+                                    FindSpecificCreature(name);
+                                    break;
+                                default:
+                                    Console.WriteLine("[System] 잘못된 행동입니다.");
+                                    Thread.Sleep(2000);
+                                    break;
+                            }
+                            break;
+                    }
+                }
+                Console.WriteLine("계속 하려면 아무 키나 누르세요...");
+                Console.ReadKey();
+            }
+        }
+
         public void JoinRandomCreatures(int number)
         {
             Console.Clear();
@@ -116,7 +199,8 @@ namespace CSharp_First
                     PartyList.Add(newCreature);
                     Console.WriteLine($"[System] {newCreature.Name}이(가) 파티에 합류했습니다!");
                 }         
-            }      
+            }
+            Console.WriteLine("뽑기가 완료되었습니다.");
         }
 
         public void JoinSpecificCreature(FantasticCreature creature)
@@ -126,37 +210,13 @@ namespace CSharp_First
             Console.WriteLine($"[System] {creature.Name}이(가) 파티에 합류했습니다!");
         }
 
-        public void ShowCreaturePool()
-        {
-            Console.WriteLine("==========<< 전체 크리쳐 목록 >>==========");
-            for (int i = 0; i < CreaturePool.Count; i++)
-            {
-                Console.WriteLine($"[{i + 1}] Name: {CreaturePool[i].Name}\nRank: {CreaturePool[i].Rank} | Level: {CreaturePool[i].Level}\n");
-            }
-        }
-
-        public void ShowPartyInfo(List<FantasticCreature> list)
-        {
-            Console.WriteLine("==========<< 파티 정보 >>==========");
-            for (int i = 0; i < list.Count; i++)
-            {
-                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}\nRank: {list[i].Rank} | Level: {list[i].Level}\n");
-            }
-        }
-
-        public void ShowCreatureInfo(FantasticCreature creature)
-        {
-            Console.WriteLine($"==========<< 크리쳐 정보 >>==========");
-            Console.WriteLine($"Name: {creature.Name}\nRank: {creature.Rank} | Level: {creature.Level}\n");
-        }
-
         public void FindSpecificCreature(string name)
         {
-            FantasticCreature? creature = PartyList.Find(c => c.Name == name);
-            if (creature != null)
+            List<FantasticCreature> result = PartyList.FindAll(c => c.Name == name);
+            if (result.Count > 0)
             {
                 Console.WriteLine($"[System] {name}이(가) 파티에 존재합니다!");
-                ShowCreatureInfo(creature);
+                GameUtility.ShowPartyInfo(result);
                 return;
             }
             Console.WriteLine($"[System] {name}이(가) 파티에 존재하지 않습니다.");
@@ -164,11 +224,11 @@ namespace CSharp_First
 
         public void FindSpecificCreature(CreatureRank rank)
         {
-            FantasticCreature? creature = PartyList.Find(c => c.Rank == rank);
-            if (creature != null)
+            List<FantasticCreature> result = PartyList.FindAll(c => c.Rank == rank);
+            if (result.Count > 0)
             {
                 Console.WriteLine($"[System] {rank}이(가) 파티에 존재합니다!");
-                ShowCreatureInfo(creature);
+                GameUtility.ShowPartyInfo(result);
                 return;
             }
             Console.WriteLine($"[System] {rank}이(가) 파티에 존재하지 않습니다.");
@@ -176,15 +236,89 @@ namespace CSharp_First
 
         public void FindSpecificCreature(int level)
         {
-            FantasticCreature? creature = PartyList.Find(c => c.Level >= level);
-            if (creature != null)
+            List<FantasticCreature> result = PartyList.FindAll(c => c.Level >= level);
+            if (result.Count > 0)
             {
                 Console.WriteLine($"[System] 레벨 {level}이상인 몬스터가 파티에 존재합니다!");
-                ShowCreatureInfo(creature);
+                GameUtility.ShowPartyInfo(result);
                 return;
             }
             Console.WriteLine($"[System] 레벨 {level}이상인 몬스터가 파티에 존재하지 않습니다.");
+        } 
+    }
+
+    public static class GameUtility
+    {
+        public static bool IsPartyEmpty(List<FantasticCreature> list)
+        {
+            if (list.Count == 0 || list == null)
+            {
+                return true;
+            }
+            return false;
         }
+
+
+        public static int CheckInputIsNumber(string input, int min, int max)
+        {
+            if (int.TryParse(input, out int number))
+            {
+                if (number < min || number > max)
+                {
+                    Console.WriteLine("[System] 올바른 숫자를 입력해주세요.");
+                    Console.ReadKey();
+                    return -1;
+                }
+                else return number;
+            }   
+            else
+            {
+                Console.WriteLine("[System] 숫자를 입력해주세요.");
+                Console.ReadKey();
+                return -1;
+            }
+        }
+
+        public static void ShowCreaturePool(List<FantasticCreature> list)
+        {
+            if (list.Count == 0)
+            {
+                Console.WriteLine("목록이 비어 있습니다.");
+                return;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {   
+                Console.WriteLine("==========<< 크리쳐 목록 >>==========");
+                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}");
+                Console.WriteLine($"Rank: {list[i].Rank} | Level: {list[i].Level}");
+                Console.WriteLine("------------------------------------");
+            }
+        }
+
+        public static void ShowPartyInfo(List<FantasticCreature> list)
+        {
+            if (IsPartyEmpty(list))
+            {
+                Console.WriteLine("[System] 파티에 크리쳐가 존재하지 않습니다.");
+                Thread.Sleep(1000); 
+                return;
+            }
+
+            Console.WriteLine("==========<< 파티 정보 >>==========");
+            for (int i = 0; i < list.Count; i++)
+            {
+                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}\nRank: {list[i].Rank} | Level: {list[i].Level}\n");
+            }
+        }
+
+        // 현재 사용하지 않는 메서드
+        public static void ShowCreatureInfo(FantasticCreature creature)
+        {
+            Console.WriteLine($"==========<< 크리쳐 정보 >>==========");
+            Console.WriteLine($"Name: {creature.Name}\nRank: {creature.Rank} | Level: {creature.Level}\n");
+        }
+
     }
 
     internal class Program
@@ -192,6 +326,10 @@ namespace CSharp_First
         static void Main(string[] args)
         {   
             GameManager gm = new GameManager();
+
+            gm.PlayGame();
+            Console.WriteLine("게임이 종료되었습니다. 감사합니다!");  
+
         }
     }
 }
