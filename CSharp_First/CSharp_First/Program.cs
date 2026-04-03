@@ -4,7 +4,14 @@ using System.Threading;
 
 namespace CSharp_First
 {
-    
+    public enum GameState
+    {
+        None = 0,
+        Start,
+        Running,
+        End,
+    }
+
     public enum CreatureRank
     {
         None,
@@ -48,6 +55,34 @@ namespace CSharp_First
         }
     }
 
+    public class AncientSlime : FantasticCreature
+    {
+        public int Size { get; private set; }
+
+        public AncientSlime()
+        {
+            Name = "고대 왕 슬라임";
+            Rank = CreatureRank.Unique;
+            Level = 1;
+            Size = 10;
+        }
+
+        public override void LevelUp()
+        {
+            base.LevelUp();
+            Size *= 2;
+            Console.WriteLine($"[{Name}]의 몸집이 거대해졌습니다! (현재 크기: {Size})");
+        }
+
+        public void Split()
+        {
+            if (Size > 20)
+                Console.WriteLine($"[{Name}]이 여러 마리의 작은 슬라임으로 분열하여 공격을 회피합니다!");
+            else
+                Console.WriteLine($"[{Name}]이 몸을 부풀려 위협합니다.");
+        }
+    }
+
     public class CrystalDragon : FantasticCreature
     {
         public int CrystalCount { get; private set; }
@@ -81,66 +116,144 @@ namespace CSharp_First
         }
     }
 
+    public class EternalPhoenix : FantasticCreature
+    {
+        public int FireEssence { get; private set; }
+
+        public EternalPhoenix()
+        {
+            Name = "영원의 피닉스";
+            Rank = CreatureRank.Ancient; // 고대 등급
+            Level = 10;
+            FireEssence = 0;
+        }
+
+        public override void LevelUp()
+        {
+            base.LevelUp();
+            FireEssence += 5;
+            Console.WriteLine($"[{Name}]의 깃털이 붉게 타오르며 불꽃의 정수를 얻었습니다!");
+        }
+
+        public void Rebirth()
+        {
+            Console.WriteLine($"[{Name}]가 잿더미 속에서 다시 부활합니다! 모든 상처가 치유됩니다.");
+        }
+    }
+
+    public class ShadowStalker : FantasticCreature
+    {
+        public double EvasionRate { get; private set; }
+
+        public ShadowStalker()
+        {
+            Name = "그림자 추적자";
+            Rank = CreatureRank.Rare;
+            Level = 3;
+            EvasionRate = 10.5;
+        }
+
+        public override void LevelUp()
+        {
+            base.LevelUp();
+            EvasionRate += 2.5;
+            Console.WriteLine($"[{Name}]가 어둠 속에 더 깊이 숨어듭니다. (회피율: {EvasionRate}%)");
+        }
+
+        public void Assassinate()
+        {
+            Console.WriteLine($"[{Name}]가 적의 뒤를 잡아 치명적인 일격을 날립니다!");
+        }
+    }
+
     public class GameManager
     {
-        private int _creatureCount = 2;
+        // 개선 필요1
+        private int _creatureCount = 5; //CreaturePool.Count를 어떻게 쓰면 좋을까 고민하다가 일단 임시로 설정
+        public GameState currentState { get; private set; } = GameState.None;
         public List<FantasticCreature> CreaturePool = new List<FantasticCreature>();
         public List<FantasticCreature> PartyList = new List<FantasticCreature>();
-        
-        public GameManager()
+
+        public void InitGame()
         {
+            currentState = GameState.Start;
+            CreaturePool.Clear();
+            Console.WriteLine("데이터 로딩중...");
+
+            // 개선 필요2 - 뽑기 로직에서 문제점 발생
+            // AI추천: 리플랙션 or 팩토리패턴(근데 모르겠음, 좀 더 공부해봐야할듯)
             CreaturePool.Add(new GoldenGoblin());
+            CreaturePool.Add(new AncientSlime());
             CreaturePool.Add(new CrystalDragon());
+            CreaturePool.Add(new EternalPhoenix());
+            CreaturePool.Add(new ShadowStalker());  
+
+            currentState = GameState.Running;
+
+            RunningGame();
+
+            EndGame();
         }
 
         public void RunningGame()
         {
-            bool isRunning = true;
-            while (isRunning)
+            while (currentState == GameState.Running)
             {
                 GameUtility.ShowMainMenu();
-                int number = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 4);
+                int number = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
+                if (number == -1) return;
+                if (number == 0)
                 {
-                    if (number == 0)
-                    {
-                        isRunning = false;
-                        continue;
-                    }
+                    currentState = GameState.End;
+                    return;
+                }
 
-                    if (number == -1) continue;
-
-                    switch (number)
-                    {
-                        case 1:
-                            Console.WriteLine("뽑고 싶은 횟수를 입력하세요");
-                            int count = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 10);
-                            if (count == -1) continue;
-                            JoinRandomCreatures(count);
-                            break;
-                        case 2:
-                            Console.WriteLine("크리쳐를 선택하세요:");
-                            GameUtility.ShowCreaturePool(CreaturePool);
-                            int choice = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, CreaturePool.Count);
-                            if (choice == -1) continue;
-                            JoinSpecificCreature(CreaturePool[choice - 1]);
-
-                            break;
-                        case 3:
-                            GameUtility.ShowCreaturePool(CreaturePool);
-                            break;
-                        case 4:
-                            GameUtility.ShowPartyInfo(PartyList);
-                            if (GameUtility.IsPartyEmpty(PartyList)) continue;
-                            Console.WriteLine("1. 특정 레벨값으로 찾기\n2. 등급으로 찾기\n3. 이름으로 찾기");
-                            int category = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 3);
-                            if (category == -1) continue;
-                            ShowFindMenu(category);
-                            break;
-                    }
+                switch (number)
+                {
+                    case 1:
+                        Console.WriteLine("뽑고 싶은 횟수를 입력하세요(최대 10회)");
+                        int count = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 10);
+                        if (count != -1) JoinRandomCreatures(count);
+                        break;
+                    case 2:
+                        Console.WriteLine("크리쳐를 선택하세요:");
+                        GameUtility.ShowCreaturePool(CreaturePool);
+                        int choice = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, CreaturePool.Count);
+                        if (choice != -1) JoinSpecificCreature(CreaturePool[choice - 1]);
+                        break;
+                    case 3:
+                        GameUtility.ShowCreaturePool(CreaturePool);
+                        break;
+                    case 4:
+                        GameUtility.ShowPartyInfo(PartyList);
+                        if (!GameUtility.IsPartyEmpty(PartyList))
+                        {
+                            Console.WriteLine("1. 특정 레벨값으로 찾기\n2. 등급으로 찾기\n3. 이름으로 찾기\n4. 메뉴로 돌아가기");
+                            int category = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 4);
+                            if (category != -1) ShowFindMenu(category);
+                        }
+                        break;
+                    case 5:
+                        Console.WriteLine("개발자 메뉴입니다.");
+                        if (GameUtility.IsPartyEmpty(PartyList))
+                        {
+                            Console.WriteLine("[System] 테스트할 파티원이 없습니다.");
+                        }
+                        else
+                        {
+                            DeveloperTestMenu();
+                        }
+                        break;
                 }
                 Console.WriteLine("계속 하려면 아무 키나 누르세요...");
                 Console.ReadKey();
-            }
+            }          
+        }
+
+        public void EndGame()
+        {
+            Console.Clear();
+            Console.WriteLine("뽑기 시뮬레이터 종료....");
         }
 
         public void JoinRandomCreatures(int number)
@@ -152,22 +265,26 @@ namespace CSharp_First
             {
                 Console.WriteLine($"{i + 1}회차 뽑기는....");
                 Thread.Sleep(1200);
-                int choice = randNum.Next(0, _creatureCount);
+                int choice = randNum.Next(0, CreaturePool.Count);
                 FantasticCreature? newCreature = null;
-                switch(choice)
-                {
-                    case 0:
-                        newCreature = new GoldenGoblin();
-                        break;
-                    case 1:
-                        newCreature = new CrystalDragon();
-                        break;
-                }
+                // 개선 필요2
+                // 몬스터 클래스가 추가될 때마다 if문을 추가해야 하는 문제점 발생
+                if (choice == 0)
+                    newCreature = new GoldenGoblin();
+                else if (choice == 1)
+                    newCreature = new CrystalDragon();
+                else if (choice == 2)
+                    newCreature = new AncientSlime();
+                else if (choice == 3)
+                    newCreature = new EternalPhoenix();
+                else if (choice == 4)
+                    newCreature = new ShadowStalker();
 
                 if (newCreature != null)
                 {
                     PartyList.Add(newCreature);
-                    Console.WriteLine($"[System] {newCreature.Name}이(가) 파티에 합류했습니다!");
+                    GameUtility.GetCreatureRankToColor(newCreature.Rank);
+                    Console.WriteLine($"{newCreature.Name}이(가) 파티에 합류했습니다!");
                 }         
             }
             Console.WriteLine("뽑기가 완료되었습니다.");
@@ -176,8 +293,26 @@ namespace CSharp_First
         public void JoinSpecificCreature(FantasticCreature creature)
         {     
             Console.WriteLine("=======크리쳐 선택권 사용!!========");
-            PartyList.Add(creature);
-            Console.WriteLine($"[System] {creature.Name}이(가) 파티에 합류했습니다!");
+            // 개선 필요2
+            // 마찬가지로 몬스터 클래스가 추가될 때마다 if문을 추가해야 하는 문제점 발생
+            FantasticCreature? newCreature = null;
+            if (creature is GoldenGoblin)
+                newCreature = new GoldenGoblin();
+            else if (creature is AncientSlime)
+                newCreature = new AncientSlime();
+            else if (creature is CrystalDragon)
+                newCreature = new CrystalDragon();
+            else if (creature is EternalPhoenix)
+                newCreature = new EternalPhoenix();
+            else if (creature is ShadowStalker)
+                newCreature = new ShadowStalker();
+
+            if (newCreature != null)
+            {
+                PartyList.Add(newCreature);
+                GameUtility.GetCreatureRankToColor(creature.Rank);
+                Console.WriteLine($"{creature.Name}이(가) 파티에 합류했습니다!");
+            }              
         }
 
         public void ShowFindMenu(int number)
@@ -208,6 +343,10 @@ namespace CSharp_First
                         return;
                     }
                     FindSpecificCreature(name);
+                    break;
+                case 4:
+                    Console.WriteLine("메뉴로 돌아갑니다.");
+                    Thread.Sleep(1000);
                     break;
                 default:
                     Console.WriteLine("[System] 잘못된 행동입니다.");
@@ -250,7 +389,53 @@ namespace CSharp_First
                 return;
             }
             Console.WriteLine($"[System] 레벨 {level}이상인 몬스터가 파티에 존재하지 않습니다.");
-        } 
+        }
+
+        public void DeveloperTestMenu()
+        {
+            Console.Clear();
+            Console.WriteLine("==========<< 개발자 테스트 모드 >>==========");
+            GameUtility.ShowPartyInfo(PartyList);
+            Console.WriteLine("테스트할 크리쳐 번호를 선택하세요 (0: 취소):");
+
+            int index = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, PartyList.Count);
+            if (index <= 0) return;
+
+            FantasticCreature target = PartyList[index - 1];
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine($"[ {target.Name} 테스트 중... ]");
+                Console.WriteLine("1. 레벨업 테스트");
+                Console.WriteLine("2. 고유 스킬 테스트");
+                Console.WriteLine("0. 나가기");
+
+                int testAction = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 2);
+                if (testAction == 0) break;
+
+                if (testAction == 1) target.LevelUp();
+                else if (testAction == 2) ExecuteUniqueSkill(target);
+
+                Console.WriteLine("\n아무 키나 누르면 테스트 메뉴로 돌아갑니다...");
+                Console.ReadKey();
+            }
+        }
+
+        private void ExecuteUniqueSkill(FantasticCreature creature)
+        {
+            Console.WriteLine($"==== {creature.Name} 고유 기능 실행 ====");
+
+            // 개선 필요2
+            // 형변환을 이용해 고유 기능을 호출
+            if (creature is AncientSlime slime) slime.Split();
+            else if (creature is CrystalDragon dragon) dragon.Roar();
+            else if (creature is EternalPhoenix phoenix) phoenix.Rebirth();
+            else if (creature is ShadowStalker stalker) stalker.Assassinate();
+            else if (creature is GoldenGoblin)
+                Console.WriteLine("황금 고블린은 고유 액티브 스킬이 없습니다.");
+            else
+                Console.WriteLine("정의되지 않은 고유 기능입니다.");
+        }
     }
 
     public static class GameUtility
@@ -291,6 +476,8 @@ namespace CSharp_First
             Console.ResetColor();
         }
 
+        // 개선 필요3
+        // 게임의 메뉴가 늘어날 때마다 CheckInputIsNumber 메서드의 매개변수로 들어가는 max값을 일일이 수정해줘야 하는 문제점 발생
         public static int CheckInputIsNumber(string input, int min, int max)
         {
             if (int.TryParse(input, out int number))
@@ -314,9 +501,10 @@ namespace CSharp_First
         public static void ShowMainMenu()
         {
             Console.Clear();
+            Console.WriteLine("<뽑기 시뮬레이터 Fantastic Version>");
             Console.WriteLine("===================================");
             Console.WriteLine("===================================");
-            Console.WriteLine("1. 크리쳐 랜덤 뽑기\n2. 크리쳐 확정 뽑기\n3. 전체 크리쳐 목록 보기\n4. 내 파티 보기\n0: 종료");
+            Console.WriteLine("1. 크리쳐 랜덤 뽑기\n2. 크리쳐 확정 뽑기\n3. 전체 크리쳐 목록 보기\n4. 내 파티 보기\n5. 개발자 메뉴\n0. 종료");
             Console.WriteLine("===================================");
             Console.WriteLine("===================================");
         }
@@ -328,15 +516,14 @@ namespace CSharp_First
                 Console.WriteLine("목록이 비어 있습니다.");
                 return;
             }
-
+            Console.Clear();
+            Console.WriteLine("=========<< 크리쳐 목록 >>=========");
             for (int i = 0; i < list.Count; i++)
             {   
-                Console.WriteLine("==========<< 크리쳐 목록 >>==========");
-                Console.WriteLine($"[{i + 1}] ");
                 GetCreatureRankToColor(list[i].Rank);
-                Console.WriteLine($"{list[i].Name} | Level: {list[i].Level}");
-                Console.WriteLine("------------------------------------");
+                Console.WriteLine($"\n[{i + 1}] <{list[i].Name}> Lv.{list[i].Level}");
             }
+            Console.WriteLine("===================================");
         }
 
         public static void ShowPartyInfo(List<FantasticCreature> list)
@@ -352,7 +539,7 @@ namespace CSharp_First
             for (int i = 0; i < list.Count; i++)
             {
                 GetCreatureRankToColor(list[i].Rank);
-                Console.WriteLine($"[{i + 1}] Name: {list[i].Name}\nLevel: {list[i].Level}\n");
+                Console.WriteLine($"[{i + 1}] <{list[i].Name}> Lv.{list[i].Level}\n");
             }
         }
 
@@ -361,7 +548,7 @@ namespace CSharp_First
         {
             Console.WriteLine($"==========<< 크리쳐 정보 >>==========");
             GetCreatureRankToColor(creature.Rank);
-            Console.WriteLine($"Name: {creature.Name}\nLevel: {creature.Level}\n");
+            Console.WriteLine($"<{creature.Name}> Lv.{creature.Level}");
         }
 
     }
@@ -369,11 +556,9 @@ namespace CSharp_First
     internal class Program
     {
         static void Main(string[] args)
-        {   
+        {
             GameManager gm = new GameManager();
-
-            gm.RunningGame();
-            Console.WriteLine("게임이 종료되었습니다. 감사합니다!");  
+            gm.InitGame();
 
         }
     }
