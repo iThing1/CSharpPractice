@@ -48,7 +48,6 @@ namespace CSharp_First
             Rank = CreatureRank.Normal;
             Level = 1;
         }
-
         public override void LevelUp()
         {
             base.LevelUp();
@@ -111,7 +110,6 @@ namespace CSharp_First
         {
             if (CrystalCount > 0)
             {
-                // 레벨업 시 떨어지진 크리스탈 조각 갯수를 확정 뽑기의 재화로 사용할 수 있도록 구현해보는 것도
                 Console.WriteLine($"[System]크리스탈이 {CrystalCount}개 떨어졌습니다.");
             }
         }
@@ -275,20 +273,13 @@ namespace CSharp_First
                         GameUtility.ShowList(CreaturePool, "전체 크리쳐 목록");
                         break;
                     case 4:
-                        if (GameUtility.IsPartyEmpty(PartyList))
-                            Console.WriteLine("[System] 파티가 비어있습니다. 먼저 크리쳐 뽑기를 진행하세요");
+                        if (GameUtility.IsPartyEmpty(PartyList)) Console.WriteLine("[System] 파티가 비어있습니다. 먼저 크리쳐 뽑기를 진행하세요");
                         else ShowPartyMenu();
                             break;
                     case 5:
                         Console.WriteLine("개발자 메뉴입니다.");
-                        if (GameUtility.IsPartyEmpty(PartyList))
-                        {
-                            Console.WriteLine("[System] 테스트할 파티원이 없습니다.");
-                        }
-                        else
-                        {
-                            ShowDeveloperTestMenu();
-                        }
+                        if (GameUtility.IsPartyEmpty(PartyList)) Console.WriteLine("[System] 테스트할 파티원이 없습니다.");
+                        else ShowDeveloperTestMenu();
                         break;
                 }
                 Console.WriteLine("계속 하려면 아무 키나 누르세요...");
@@ -345,17 +336,17 @@ namespace CSharp_First
             // 개선 필요2
             // 마찬가지로 몬스터 클래스가 추가될 때마다 if문을 추가해야 하는 문제점 발생
             FantasticCreature? newCreature = null;
-            if (creature is GoldenGoblin)
+            if (creature is GoldenGoblin) 
                 newCreature = new GoldenGoblin();
-            else if (creature is AncientSlime)
+            else if (creature is AncientSlime) 
                 newCreature = new AncientSlime();
-            else if (creature is CrystalDragon)
+            else if (creature is CrystalDragon) 
                 newCreature = new CrystalDragon();
-            else if (creature is EternalPhoenix)
+            else if (creature is EternalPhoenix) 
                 newCreature = new EternalPhoenix();
-            else if (creature is ShadowStalker)
+            else if (creature is ShadowStalker) 
                 newCreature = new ShadowStalker();
-            else if (creature is StormWeaver)
+            else if (creature is StormWeaver) 
                 newCreature = new StormWeaver();
 
             if (newCreature != null)
@@ -478,10 +469,7 @@ namespace CSharp_First
     {
         public static bool IsPartyEmpty(List<FantasticCreature> list)
         {
-            if (list.Count == 0 || list == null)
-            {
-                return true;
-            }
+            if (list.Count == 0 || list == null) return true;
             return false;
         }
 
@@ -586,7 +574,7 @@ namespace CSharp_First
 
         private static void SortByRank(List<FantasticCreature> list)
         {
-            if (!IsPartyEmpty(list)) return;
+            if (IsPartyEmpty(list)) return;
             list.Sort((a, b) => b.Rank.CompareTo(a.Rank));
         }
 
