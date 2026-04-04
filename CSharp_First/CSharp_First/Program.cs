@@ -20,6 +20,7 @@ namespace CSharp_First
         Unique,
         Legendary,
         Ancient,
+        Count   // 개선 필요3의 해결책으로 추가. enum에 포함된 크리쳐의 등급의 수를 CreatureRank.Counting으로 표현.
     }
 
     public class FantasticCreature
@@ -123,7 +124,7 @@ namespace CSharp_First
         public EternalPhoenix()
         {
             Name = "영원의 피닉스";
-            Rank = CreatureRank.Ancient; // 고대 등급
+            Rank = CreatureRank.Ancient;
             Level = 10;
             FireEssence = 0;
         }
@@ -171,7 +172,7 @@ namespace CSharp_First
         {
             base.LevelUp();
             EvasionRate += 2.5;
-            Console.WriteLine($"[{Name}]가 어둠 속에 더 깊이 숨어듭니다. (회피율: {EvasionRate}%)");
+            Console.WriteLine($"[{Name}]가 어둠 속에 더 깊이 숨어듭니다. (회피율: +{EvasionRate}%)");
         }
 
         public void Assassinate()
@@ -180,10 +181,44 @@ namespace CSharp_First
         }
     }
 
+    public class StormWeaver : FantasticCreature
+    {
+        public int StaticCharge { get; private set; }
+
+        public StormWeaver()
+        {
+            Name = "폭풍을 잣는 자";
+            Rank = CreatureRank.Legendary;
+            Level = 7;
+            StaticCharge = 0;
+        }
+
+        public override void LevelUp()
+        {
+            base.LevelUp();
+            StaticCharge += 12;
+            Console.WriteLine($"[{Name}]의 주변 공기가 떨리며 전기가 흐릅니다. (현재 충전: {StaticCharge}V)");
+        }
+
+        public void ThunderStrike()
+        {
+            if (StaticCharge >= 36)
+            {
+                Console.WriteLine($"[{Name}]이 벼락의 실타래를 풀어헤칩니다! 거대한 낙뢰가 전장을 강타합니다.");
+                StaticCharge -= 36;
+            }
+            else
+            {
+                Console.WriteLine($"[System] 아직 대기의 에너지가 충분히 모이지 않았습니다. (필요: 36V)");
+            }
+        }
+    }
+
     public class GameManager
     {
-        // 개선 필요1
-        private int _creatureCount = 5; //CreaturePool.Count를 어떻게 쓰면 좋을까 고민하다가 일단 임시로 설정
+        private readonly int MIN_LEVEL = 1;
+        private readonly int MAX_LEVEL = 100;
+
         public GameState currentState { get; private set; } = GameState.None;
         public List<FantasticCreature> CreaturePool = new List<FantasticCreature>();
         public List<FantasticCreature> PartyList = new List<FantasticCreature>();
@@ -194,13 +229,13 @@ namespace CSharp_First
             CreaturePool.Clear();
             Console.WriteLine("데이터 로딩중...");
 
-            // 개선 필요2 - 뽑기 로직에서 문제점 발생
-            // AI추천: 리플랙션 or 팩토리패턴(근데 모르겠음, 좀 더 공부해봐야할듯)
+            // 개선 필요2 - 크리쳐 데이터 추가
             CreaturePool.Add(new GoldenGoblin());
             CreaturePool.Add(new AncientSlime());
             CreaturePool.Add(new CrystalDragon());
             CreaturePool.Add(new EternalPhoenix());
             CreaturePool.Add(new ShadowStalker());  
+            CreaturePool.Add(new StormWeaver());
 
             currentState = GameState.Running;
 
@@ -231,22 +266,18 @@ namespace CSharp_First
                         break;
                     case 2:
                         Console.WriteLine("크리쳐를 선택하세요:");
-                        GameUtility.ShowCreaturePool(CreaturePool);
+                        GameUtility.ShowList(CreaturePool, "전체 크리쳐 목록");
                         int choice = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, CreaturePool.Count);
                         if (choice != -1) JoinSpecificCreature(CreaturePool[choice - 1]);
                         break;
                     case 3:
-                        GameUtility.ShowCreaturePool(CreaturePool);
+                        GameUtility.ShowList(CreaturePool, "전체 크리쳐 목록");
                         break;
                     case 4:
-                        GameUtility.ShowPartyInfo(PartyList);
-                        if (!GameUtility.IsPartyEmpty(PartyList))
-                        {
-                            Console.WriteLine("1. 특정 레벨값으로 찾기\n2. 등급으로 찾기\n3. 이름으로 찾기\n4. 메뉴로 돌아가기");
-                            int category = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 4);
-                            if (category != -1) ShowFindMenu(category);
-                        }
-                        break;
+                        if (GameUtility.IsPartyEmpty(PartyList))
+                            Console.WriteLine("[System] 파티가 비어있습니다. 먼저 크리쳐 뽑기를 진행하세요");
+                        else ShowPartyMenu();
+                            break;
                     case 5:
                         Console.WriteLine("개발자 메뉴입니다.");
                         if (GameUtility.IsPartyEmpty(PartyList))
@@ -293,6 +324,8 @@ namespace CSharp_First
                     newCreature = new EternalPhoenix();
                 else if (choice == 4)
                     newCreature = new ShadowStalker();
+                else if (choice == 5)
+                    newCreature = new StormWeaver();
 
                 if (newCreature != null)
                 {
@@ -320,6 +353,8 @@ namespace CSharp_First
                 newCreature = new EternalPhoenix();
             else if (creature is ShadowStalker)
                 newCreature = new ShadowStalker();
+            else if (creature is StormWeaver)
+                newCreature = new StormWeaver();
 
             if (newCreature != null)
             {
@@ -329,40 +364,20 @@ namespace CSharp_First
             }              
         }
 
-        public void ShowFindMenu(int number)
+        public void ShowPartyMenu()
         {
-            switch (number)
+            while (true)
             {
-                case 1:
-                    Console.WriteLine("찾고 싶은 레벨값을 입력하세요:");
-                    int level = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 1, 100);
-                    if (level == -1) return;
-                    FindSpecificCreature(level);
-                    break;
-                case 2:
-                    Console.WriteLine("찾고 싶은 등급을 입력하세요:");
-                    Console.WriteLine("0: None | 1: Normal | 2: Rare | 3: Unique | 4: Legendary | 5: Ancient");
-                    int rankNum = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
-                    if (rankNum == -1) return;
-                    CreatureRank rank = (CreatureRank)rankNum;
-                    FindSpecificCreature(rank);
-                    break;
-                case 3:
-                    Console.WriteLine("찾고 싶은 이름을 입력하세요:");
-                    string name = Console.ReadLine() ?? "";
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        Console.WriteLine("[System] 이름을 입력해주세요.");
-                        Console.ReadKey();
-                        return;
-                    }
-                    FindSpecificCreature(name);
-                    break;
-                case 4:
-                    break;
-                default:
-                    Console.WriteLine("[System] 잘못된 행동입니다.");
-                    break;
+                Console.Clear();
+                GameUtility.ShowList(PartyList, "내 파티 정보");
+                Console.WriteLine("\n[ 1. 검색 | 2. 정렬 | 0. 메인으로 돌아가기 ]");
+                Console.WriteLine("===================================");
+
+                int choice = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 2);
+                if (choice == 0) break;
+
+                if (choice == 1) OpenSearchMenu(); // 검색 상세 (1.레벨 2.등급 3.이름)
+                else if (choice == 2) OpenSortMenu(); // 정렬 상세 (1.레벨 2.등급 3.이름)
             }
         }
 
@@ -373,7 +388,7 @@ namespace CSharp_First
             if (result.Count > 0)
             {
                 Console.WriteLine($"[System] {name}이(가) 파티에 존재합니다!");
-                GameUtility.ShowPartyInfo(result);
+                GameUtility.ShowList(result, "크리쳐 목록");
                 return;
             }
             Console.WriteLine($"[System] {name}이(가) 파티에 존재하지 않습니다.");
@@ -385,7 +400,7 @@ namespace CSharp_First
             if (result.Count > 0)
             {
                 Console.WriteLine($"[System] {rank}이(가) 파티에 존재합니다!");
-                GameUtility.ShowPartyInfo(result);
+                GameUtility.ShowList(result, "크리쳐 목록");
                 return;
             }
             Console.WriteLine($"[System] {rank}이(가) 파티에 존재하지 않습니다.");
@@ -397,7 +412,7 @@ namespace CSharp_First
             if (result.Count > 0)
             {
                 Console.WriteLine($"[System] 레벨 {level}이상인 몬스터가 파티에 존재합니다!");
-                GameUtility.ShowPartyInfo(result);
+                GameUtility.ShowList(result,"크리쳐 목록");
                 return;
             }
             Console.WriteLine($"[System] 레벨 {level}이상인 몬스터가 파티에 존재하지 않습니다.");
@@ -407,7 +422,7 @@ namespace CSharp_First
         {
             Console.Clear();
             Console.WriteLine("==========<< 개발자 테스트 모드 >>==========");
-            GameUtility.ShowPartyInfo(PartyList);
+            GameUtility.ShowList(PartyList, "내 파티 목록");
             Console.WriteLine("테스트할 크리쳐 번호를 선택하세요 (0: 취소):");
 
             int index = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, PartyList.Count);
@@ -433,6 +448,45 @@ namespace CSharp_First
             }
         }
 
+        private void OpenSearchMenu()
+        {
+            Console.WriteLine("[검색 기준 선택] (1.레벨 2.등급 3.이름 0.취소)");
+            int type = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 3);
+            if (type <= 0) return;
+
+            switch (type)
+            {
+                case 1:
+                    Console.Write("찾을 최소 레벨: ");
+                    int level = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", MIN_LEVEL, MAX_LEVEL);
+                    if (level != -1) FindSpecificCreature(level);
+                    break;
+                case 2:
+                    Console.WriteLine("0. None 1. Normal, 2. Rare 3. Unique 4. Legendary 5. Ancient");
+                    int rank = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 5);
+                    if (rank != -1) FindSpecificCreature((CreatureRank)rank);
+                    break;
+                case 3:
+                    Console.Write("찾을 이름: ");
+                    string name = Console.ReadLine() ?? "";
+                    if (name is not null or "") FindSpecificCreature(name);
+                    break;
+            }
+            Console.WriteLine("아무 키나 누르면 파티 메뉴로 돌아갑니다.");
+            Console.ReadKey();
+        }
+
+        private void OpenSortMenu()
+        {
+            Console.WriteLine("[정렬 기준 선택] (1.레벨순 2.등급순 3.이름순 0.취소)");
+            int sortType = GameUtility.CheckInputIsNumber(Console.ReadLine() ?? "", 0, 3);
+            if (sortType <= 0) return;
+
+            GameUtility.SortList(PartyList, sortType);
+            Console.WriteLine("[System] 정렬이 완료되었습니다. (아무 키나 누르세요)");
+            Console.ReadKey();
+        }
+
         private void ExecuteUniqueSkill(FantasticCreature creature)
         {
             Console.WriteLine($"==== {creature.Name} 고유 기능 실행 ====");
@@ -443,10 +497,11 @@ namespace CSharp_First
             else if (creature is CrystalDragon dragon) dragon.Roar();
             else if (creature is EternalPhoenix phoenix) phoenix.Rebirth();
             else if (creature is ShadowStalker stalker) stalker.Assassinate();
+            else if (creature is StormWeaver weaver) weaver.ThunderStrike();
             else if (creature is GoldenGoblin)
-                Console.WriteLine("황금 고블린은 고유 액티브 스킬이 없습니다.");
+                Console.WriteLine("[System] 황금 고블린은 고유 액티브 스킬이 없습니다.");
             else
-                Console.WriteLine("정의되지 않은 고유 기능입니다.");
+                Console.WriteLine("[System] 정의되지 않은 고유 기능입니다.");
         }
     }
 
@@ -508,8 +563,35 @@ namespace CSharp_First
             }
         }
 
-        public static void ShowMainMenu()
+        // 개선 필요1 - 정렬기능 추가(해결 완료)
+        // 파티의 검색기능은 구현.  레벨순, 등급순, 이름순 등등 다양한 기준으로 정렬하는 로직
+        public static void SortList(List<FantasticCreature> list, int num)
         {
+            if (num == 1) SortByLevel(list);
+            else if (num == 2) SortByRank(list);
+            else if (num == 3) SortByName(list);
+        }
+
+        private static void SortByLevel(List<FantasticCreature> list)
+        {
+            if (IsPartyEmpty(list)) return;
+            list.Sort((a, b) => b.Level.CompareTo(a.Level));
+        }
+
+        private static void SortByRank(List<FantasticCreature> list)
+        {
+            if (!IsPartyEmpty(list)) return;
+            list.Sort((a, b) => b.Rank.CompareTo(a.Rank));
+        }
+
+        private static void SortByName(List<FantasticCreature> list)
+        {
+            if (IsPartyEmpty(list)) return;
+            list.Sort((a, b) => a.Name.CompareTo(b.Name));
+        }
+
+        public static void ShowMainMenu()
+        {   
             Console.Clear();
             Console.WriteLine("<뽑기 시뮬레이터 Fantastic Version>");
             Console.WriteLine("===================================");
@@ -519,37 +601,24 @@ namespace CSharp_First
             Console.WriteLine("===================================");
         }
 
-        public static void ShowCreaturePool(List<FantasticCreature> list)
+        // 개선 필요4
+        // 아래의 ShowCreaturePool과 ShowPartyInfo 메서드는 출력 형식이 거의 동일
+        // 들어오는 매개변수 list가 CreaturePool인지 PartyList인지를 판단할 수 있다면 하나의 메서드로 통합해서 사용할 수 있을 것으로 보임
+        public static void ShowList(List<FantasticCreature> list, string title)
         {
-            if (list.Count == 0)
+            if (IsPartyEmpty(list))
             {
-                Console.WriteLine("목록이 비어 있습니다.");
+                Console.WriteLine($"[System] {title} 목록이 비어 있습니다.");
                 return;
             }
-            Console.Clear();
-            Console.WriteLine("=========<< 크리쳐 목록 >>=========");
+
+            Console.WriteLine($"==========<< {title} >>==========");
             for (int i = 0; i < list.Count; i++)
-            {   
+            {
                 GetCreatureRankToColor(list[i].Rank);
                 Console.WriteLine($"\n[{i + 1}] <{list[i].Name}> Lv.{list[i].Level}");
             }
             Console.WriteLine("===================================");
-        }
-
-        public static void ShowPartyInfo(List<FantasticCreature> list)
-        {
-            if (IsPartyEmpty(list))
-            {
-                Console.WriteLine("[System] 파티에 크리쳐가 존재하지 않습니다.");
-                return;
-            }
-
-            Console.WriteLine("==========<< 파티 정보 >>==========");
-            for (int i = 0; i < list.Count; i++)
-            {
-                GetCreatureRankToColor(list[i].Rank);
-                Console.WriteLine($"[{i + 1}] <{list[i].Name}> Lv.{list[i].Level}\n");
-            }
         }
 
         // 현재 사용하지 않는 메서드
@@ -559,7 +628,6 @@ namespace CSharp_First
             GetCreatureRankToColor(creature.Rank);
             Console.WriteLine($"<{creature.Name}> Lv.{creature.Level}");
         }
-
     }
 
     internal class Program
