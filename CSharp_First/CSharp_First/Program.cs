@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 namespace CSharp_First
 {
-    // 자료구조의 간단한 사용법에 대한 코드
+    // 2. Dictionary
+    // key 값으로 빠르게 해당 데이터에 접근, List보다 메모리 많이 먹음.
+    // ex) 도감 시스템
     public class Item
     {
         public int mID;
@@ -24,60 +26,57 @@ namespace CSharp_First
     {
         static void Main(string[] args)
         {
-            // 1. List
-            // 단순 나열, 인덱스 접근시에 사용: CPU 캐시 효율이 가장 좋음(가장 빠름)
-            List<Item> inventory = new List<Item>();
-            // 생성된 아이템을 인벤토리에 추가
-            Item redPotion = new Item(100, "빨간 포션");
-            inventory.Add(redPotion);
+            Dictionary<int, Item> itemBook = new Dictionary<int, Item>();
 
-            // 인벤토리 내에서 생성도 가능
-            inventory.Add(new Item(200, "주황 포션"));
-            inventory.Add(new Item(300, "하얀 포션"));
-            Console.WriteLine("====아이템 생성 후 인벤토리====");
-            ShowInventory(inventory);
+            Item redPotion = new Item(100, "빨강 포션");
+            Item bluePotion = new Item(200, "파란 포션");
+            Item yellowPotion = new Item(300, "노란 포션");
+
+            // Add: 새로운 Key와 데이터를 추가
+            // 이미 있는 Key를 입력하면 에러 발생
+            itemBook.Add(1, redPotion);
+            itemBook.Add(2, bluePotion);
+            //itemBook.Add(2, yellowPotion);    <-- 에러 발생!!
+            itemBook.Add(3, yellowPotion);
+
+            Console.WriteLine("==== 아이템 등록 완료 ====");
+            ShowItemInfo(itemBook);
             Console.WriteLine();
 
-            // 인벤토리 내에 삽입
-            inventory.Insert(1, new Item(400, "초록 포션"));
-            Console.WriteLine("====초록 포션 추가 후 인벤토리====");
-            ShowInventory(inventory);
-            Console.WriteLine();
-            // 인벤토리 내의 아이템 삭제
-            if (inventory.Contains(redPotion))
+            // ContainsKey & Remove: 키 존재 여부 확인 후 삭제
+            if (itemBook.ContainsKey(1))
             {
-                inventory.Remove(redPotion);
-                Console.WriteLine("====빨간 포션 삭제 후 인벤토리====");
-                ShowInventory(inventory);
+                Console.WriteLine("ID 1번(빨강 포션)을 도감에서 삭제.");
+                itemBook.Remove(1);
+                ShowItemInfo(itemBook);
                 Console.WriteLine();
             }
 
-            inventory.RemoveAt(0);
-            Console.WriteLine("====인덱스0번 삭제 후 인벤토리====");
-            ShowInventory(inventory);
-            Console.WriteLine();
-
-            inventory.Clear();
-            Console.WriteLine("====데이터 삭제 후 인벤토리====");
-            ShowInventory(inventory);
-            Console.WriteLine();
-
-        }
-        // 매우 매우 매우 매우 중요
-        // 제네릭 문법을 활용하여 인벤토리 목록을 보여주는 메서드
-        // 이후 아이템을 상속받는 Weapon, Potion, Material 등등의 리스트도 함께 처리가능
-        // 아이템이 아닌 Monster가 들어온다면? 즉시 에러 발생(박싱&언박싱이 없음)
-        // 재사용성 극대화, 타입 안정성 확보, 유지보수 편함
-        public static void ShowInventory<T>(List<T> list) where T : Item
-        {
-            if (list.Count == 0)
+            // 3. TryGetValue: 안전하고 빠른 데이터 검색
+            // 'out Item potion'에 검색 결과가 담김
+            bool isFound = itemBook.TryGetValue(2, out Item? potion);
+            if (potion != null && isFound)
             {
-                Console.WriteLine("인벤토리가 비어 있습니다."); return;
+                Console.WriteLine($"아이템 찾기 성공: {potion.ToString()}");
+            }
+            else
+            {
+                Console.WriteLine("아이템을 찾을 수 없습니다.");
+            }
+        }
+
+        // 제네릭 문법을 활용한 딕셔너리 출력 메서드
+        public static void ShowItemInfo<T>(Dictionary<int, T> dict) where T : Item
+        {
+            if (dict == null || dict.Count == 0)
+            {
+                Console.WriteLine("도감이 비어 있습니다.");
+                return;
             }
 
-            foreach (T item in list)
+            foreach (var pair in dict)
             {
-                Console.WriteLine($"아이템: {item.mName} (ID: {item.mID})");
+                Console.WriteLine($"도감 번호: {pair.Key} | 정보: {pair.Value}");
             }
         }
     }
